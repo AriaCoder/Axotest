@@ -19,28 +19,30 @@ class AxolotlDriver:
     def drive(self, direction, velocity=None, units:VelocityPercentUnits=VelocityUnits.RPM):
         pass
 
-    def driveStraight(self, distance, heading, velocity, kp):
+    def driveStraight(self, distanceMotorDegrees, headingDegrees, velocity, kp):
         error = 0
         output = 0
         # Fine tune Kp based on robot design and speed
         self.lm.set_position(0, RotationUnits.DEG)
         self.rm.set_position(0, RotationUnits.DEG)
         if velocity > 0: # Going forward
-            while(self.lm.position() < distance):
-                error = heading - self.inertial.rotation()
+            while(self.lm.position() < distanceMotorDegrees):
+                error = headingDegrees - self.inertial.heading()
                 output = error * kp
                 self.lm.set_velocity(velocity - output, VelocityUnits.PERCENT)
                 self.rm.set_velocity(velocity + output, VelocityUnits.PERCENT)
                 self.lm.spin(DirectionType.FORWARD)
                 self.rm.spin(DirectionType.FORWARD)
+                wait(20, TimeUnits.MSEC)
         else:  # Going backward
-            while(self.lm.position() > distance):
-                error = heading - self.inertial.rotation()
+            while(self.lm.position() > distanceMotorDegrees):
+                error = headingDegrees - self.inertial.heading()
                 output = error * kp
                 self.lm.set_velocity(velocity - output, VelocityUnits.PERCENT)
                 self.rm.set_velocity(velocity + output, VelocityUnits.PERCENT)
                 self.lm.spin(DirectionType.FORWARD)
                 self.rm.spin(DirectionType.FORWARD)
+                wait(20, TimeUnits.MSEC)
         self.lm.stop()
         self.rm.stop
 
@@ -148,7 +150,8 @@ class Bot:
         pass
 
     def runPidDriveTest(self):
-        pass
+        driver = AxolotlDriver(self.motorLeft, self.motorRight, self.inertial)
+        driver.driveStraight(4*360, 0, 70, 1.0)
 
     def run(self):
         self.setup()
@@ -158,7 +161,7 @@ class Bot:
         self.print("Extreme")
         self.print("Axolotls!")
         self.print("=====")
-        self.runSmartDriveTest()
+        self.runPidDriveTest()
 
         
 # Where it all begins!    
