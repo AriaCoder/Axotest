@@ -1,5 +1,6 @@
 # AXOBOTL Python Code
 # Extreme Axolotls Robotics team 4028X for 2023-2024 VEX IQ Full Volume Challenge
+from multiprocessing import Value
 from vex import *
 
 
@@ -18,30 +19,57 @@ class AxolotlDriver:
     def drive(self, direction, velocity=None, units:VelocityPercentUnits=VelocityUnits.RPM):
         pass
 
-    def driveStraight(self, distanceMotorDegrees, headingDegrees, velocity, kp):
+    def getMotorPosition(self):
+        # This is based on the theory that the average of the two motor
+        # positions is more accurate than any single motor position in case
+        # of wheel slippage on one side or the other?
+        return (self.lm.position() + self.rm.position()) / 2
+
+    # This is based on the VEX IQ Blocks implementation published by Caution Tape
+    # "How to make VEX IQ robot drive straight with VEXcode blocks"
+    # https://www.cautiontape.ca/vex-iq-robot-drive-straight-with-vexcode-blocks/
+    #
+    # TODO: Calculate distance in other units, esp. MM and IN - do that using
+    # knowledge of the wheel diameter. Or possibly even better, a one-time manual
+    # calibration program that computes the bot's motor turns per inch and
+    # prints that to screen so we can use that in this code.
+    #
+    # The bigger the kp value is, the more aggressively the bot will curve to
+    # try to regain the correct heading. But making it too aggressive will cause
+    # the bot to wiggle left and right too much. Find a nice value that gently
+    # brings the bot back to the target heading when it drifts.
+    def driveStraight(self, targetMotorDegrees, headingDegrees, velocity, kp):
+        # This is not PID - it's just P: Proportional Control
+        if kp <= 0.0:
+            raise ValueError("Kp should be larger than 0.0")
         error = 0
-        output = 0
+        tweak = 0
         # Fine tune Kp based on robot design and speed
         self.lm.set_position(0, RotationUnits.DEG)
         self.rm.set_position(0, RotationUnits.DEG)
-        if velocity > 0: # Going forward
-            while(self.lm.position() < distanceMotorDegrees):
-                error = headingDegrees - self.inertial.heading()
-                output = error * kp
-                self.lm.set_velocity(velocity - output, VelocityUnits.PERCENT)
-                self.rm.set_velocity(velocity + output, VelocityUnits.PERCENT)
-                self.lm.spin(DirectionType.FORWARD)
-                self.rm.spin(DirectionType.FORWARD)
-                wait(20, TimeUnits.MSEC)
-        else:  # Going backward
-            while(self.lm.position() > distanceMotorDegrees):
-                error = headingDegrees - self.inertial.heading()
-                output = error * kp
-                self.lm.set_velocity(velocity - output, VelocityUnits.PERCENT)
-                self.rm.set_velocity(velocity + output, VelocityUnits.PERCENT)
-                self.lm.spin(DirectionType.FORWARD)
-                self.rm.spin(DirectionType.FORWARD)
-                wait(20, TimeUnits.MSEC)
+        self.lm.set_velocity(0)
+        self.rm.set_velocity(0)
+        self.lm.spin(DirectionType.FORWARD)
+        self.rm.spin(DirectionType.FORWARD)
+
+        # Uses motor position as a sort of odemetry - but it might not be super accurate
+        # Test motor turns depending on whether going forward or reverse (negative velocity)
+        while ((velocity > 0 and self.getMotorPosition() < targetMotorDegrees) or
+               (velocity < 0 and self.getMotorPosition() > targetMotorDegrees)):
+            # How far off from where we need to be?
+            error = headingDegrees - self.inertial.heading()
+            # How much should we tweak our velocity to rotate the bot towards the
+            # correct heading?
+            # For small errors, the tweak is very small. But for large errors,
+            # the tweak is very large. Not lineraly
+            tweak = error * kp
+            # Bring the bot back on course by tweaking the velocity of the
+            # two motors so the drivetrain can turn towards the target heading
+            self.lm.set_velocity(velocity - tweak, VelocityUnits.PERCENT)
+            self.rm.set_velocity(velocity + tweak, VelocityUnits.PERCENT)
+            wait(20, TimeUnits.MSEC)
+
+        # Done, mission accomplished?
         self.lm.stop()
         self.rm.stop()
 
