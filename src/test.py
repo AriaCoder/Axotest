@@ -1,6 +1,5 @@
 # AXOBOTL Python Code
 # Extreme Axolotls Robotics team 4028X for 2023-2024 VEX IQ Full Volume Challenge
-from turtle import forward
 from vex import *
 
 
@@ -44,7 +43,7 @@ class AxolotlDriver:
                 self.rm.spin(DirectionType.FORWARD)
                 wait(20, TimeUnits.MSEC)
         self.lm.stop()
-        self.rm.stop
+        self.rm.stop()
 
 class Bot:
     MODES = ["AUTO_RED", "GOAL_2", "GOAL_1", "GOAL_3", "CURVE"]
@@ -99,7 +98,7 @@ class Bot:
 
     def stopAll(self):
         if self.driveTrain:
-            self.driveTrain.stop(COAST)
+            self.driveTrain.stop(BRAKE)
 
     def setupAutoDriveTrain(self, calibrate=True):
         # Use DriveTrain in autonomous. Easier to do turns.
@@ -151,7 +150,7 @@ class Bot:
 
     def runPidDriveTest(self):
         driver = AxolotlDriver(self.motorLeft, self.motorRight, self.inertial)
-        driver.driveStraight(4*360, 0, 70, 1.0)
+        driver.driveStraight(3.5*360, 0, 59, 0.02)
 
     def run(self):
         self.setup()
