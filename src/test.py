@@ -1,6 +1,6 @@
 # AXOBOTL Python Code
 # Extreme Axolotls Robotics team 4028X for 2023-2024 VEX IQ Full Volume Challenge
-from multiprocessing import Value
+#from multiprocessing import Value
 from vex import *
 
 
@@ -178,7 +178,7 @@ class Bot:
 
     def runPidDriveTest(self):
         driver = AxolotlDriver(self.motorLeft, self.motorRight, self.inertial)
-        driver.driveStraight(3.5*360, 0, 59, 0.02)
+        driver.driveStraight(3*360, 0, 50, 0.035)
 
     def run(self):
         self.setup()
