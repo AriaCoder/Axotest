@@ -49,25 +49,27 @@ class AxolotlDriver:
         self.rm.set_position(0, RotationUnits.DEG)
         self.lm.set_velocity(0)
         self.rm.set_velocity(0)
-        self.lm.spin(DirectionType.FORWARD)
-        self.rm.spin(DirectionType.FORWARD)
 
         # Uses motor position as a sort of odemetry - but it might not be super accurate
         # Test motor turns depending on whether going forward or reverse (negative velocity)
         while ((velocity > 0 and self.getMotorPosition() < targetMotorDegrees) or
                (velocity < 0 and self.getMotorPosition() > targetMotorDegrees)):
             # How far off from where we need to be?
-            error = headingDegrees - self.inertial.heading()
+            angle = self.inertial.rotation()
+            error = headingDegrees - angle
             # How much should we tweak our velocity to rotate the bot towards the
             # correct heading?
             # For small errors, the tweak is very small. But for large errors,
             # the tweak is very large. Not lineraly
             tweak = error * kp
+            print("Angle=" + str(angle) + " Error=" + str(error) + " Tweak=" + str(tweak))
             # Bring the bot back on course by tweaking the velocity of the
             # two motors so the drivetrain can turn towards the target heading
-            self.lm.set_velocity(velocity - tweak, VelocityUnits.PERCENT)
-            self.rm.set_velocity(velocity + tweak, VelocityUnits.PERCENT)
-            wait(20, TimeUnits.MSEC)
+            self.lm.set_velocity(velocity + tweak, VelocityUnits.PERCENT)
+            self.rm.set_velocity(velocity - tweak, VelocityUnits.PERCENT)
+            self.lm.spin(DirectionType.FORWARD)
+            self.rm.spin(DirectionType.FORWARD)
+            wait(30, TimeUnits.MSEC)
 
         # Done, mission accomplished?
         self.lm.stop()
@@ -91,7 +93,7 @@ class Bot:
         self.inertial = Inertial()
         self.setupPortMappings()
         self.setupDrive()
-        self.setupAutoDriveTrain()
+        # self.setupAutoDriveTrain()
 
     def setupPortMappings(self):
         self.motorLeft = Motor(Ports.PORT1,1,True)
@@ -178,7 +180,7 @@ class Bot:
 
     def runPidDriveTest(self):
         driver = AxolotlDriver(self.motorLeft, self.motorRight, self.inertial)
-        driver.driveStraight(3*360, 0, 50, 0.035)
+        driver.driveStraight(2*360, 0, 40, 0.6)
 
     def run(self):
         self.setup()
@@ -188,6 +190,8 @@ class Bot:
         self.print("Extreme")
         self.print("Axolotls!")
         self.print("=====")
+
+        self.calibrate()
         self.runPidDriveTest()
 
         
