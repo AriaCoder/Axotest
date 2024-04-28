@@ -66,37 +66,15 @@ class AxolotlDriver:
             # For small errors, the tweak is very small. But for large errors,
             # the tweak is very large. Not lineraly
             tweak = error * kp
-            print("Angle=" + str(angle) + " Error=" + str(error) + " Tweak=" + str(tweak) + "\n")
+            print("Angle=" + str(angle) + " Error=" + str(error) + " Tweak=" + str(tweak) + "Pos="+str(self.getMotorPosition()) +"\n")
         
             # Bring the bot back on course by tweaking the velocity of the
             # two motors so the drivetrain can turn towards the target heading
-            self.lm.set_velocity(velocity + tweak, VelocityUnits.PERCENT)
             self.rm.set_velocity(velocity - tweak, VelocityUnits.PERCENT)
+            self.lm.set_velocity(velocity +  tweak, VelocityUnits.PERCENT)
             wait(20, TimeUnits.MSEC)
-
-        # Done, mission accomplished?
-        self.lm.stop()
         self.rm.stop()
-
-
-# Global function. Inspired by 
-# https://www.vexforum.com/t/motor-is-spinning-parameter-not-working/108625/10
-def runStallThread():
-    return
-    stallTime = 0
-    while True:
-      if abs(m1.command()) > 10:
-          if m1.direction() == DirectionType.UNDEFINED:
-              stall_time = stall_time + 1
-          else:
-              stall_time = 0
-
-          if stall_time == 10:
-              brain.screen.print_at("stalled", x=10, y=40)
-              m1.stop()
-      else:
-          stall_time = 0
-      sleep(20)
+        self.lm.stop()
 
 class Bot:
     MODES = ["AUTO_RED", "GOAL_2", "GOAL_1", "GOAL_3", "CURVE"]
@@ -110,7 +88,7 @@ class Bot:
         self.cancelCalibration = False
         self.screenColor = Color.BLACK
         self.penColor = Color.WHITE
-        self.stallThread = Thread(runStallThread)
+        # self.stallThread = Thread(runStallThread)
 
     def setup(self):
         self.brain = Brain()
@@ -205,7 +183,7 @@ class Bot:
     def runPidDriveTest(self):
         driver = AxolotlDriver(self.motorLeft, self.motorRight, self.inertial)
         print("Here goes...\n")
-        driver.driveStraight(2*360, 45, 40, 0.6)
+        driver.driveStraight(720, 0, 40, 0.6)
 
     def run(self):
         self.setup()
